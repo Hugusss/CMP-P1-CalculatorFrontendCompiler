@@ -1,0 +1,73 @@
+%{
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "values.h"
+#include "parser.tab.h"
+
+void setup_id() {
+    yylval.ident.lexema = strdup(yytext);
+    yylval.ident.line = yylineno;
+}
+%}
+
+%option yylineno
+%option noyywrap
+%option nounput
+%option noinput
+
+digit       [0-9]
+enter       {digit}+
+real        {digit}+\.{digit}*([eE][+-]?{digit}+)?|{digit}+[eE][+-]?{digit}+|\.{digit}+([eE][+-]?{digit}+)?
+identif     [a-zA-Z]([a-zA-Z0-9_])*
+
+%%
+
+"//".* { /* comentario linea */ }
+"#".* { /* comentario linea */ }
+"/*"([^*]|(\*+[^*/]))*\*+\/ { /* comentario bloque */ }
+
+"int"       { return KW_INT; }
+"float"     { return KW_FLOAT; }
+"string"    { return KW_STRING; }
+"bool"      { return KW_BOOL; }
+"struct"    { return STRUCT; }
+"true"      { yylval.ival = 1; return LIT_BOOL; }
+"false"     { yylval.ival = 0; return LIT_BOOL; }
+
+":="        { return ASSIGN; }
+"+"         { return PLUS; }
+"-"         { return MINUS; }
+"*"         { return MULT; }
+"/"         { return DIV; }
+"%"         { return MOD; }
+"**"        { return POW; }
+
+"and"       { return AND; }
+"or"        { return OR; }
+"not"       { return NOT; }
+
+"("         { return LPAREN; }
+")"         { return RPAREN; }
+"{"         { return LBRACE; }
+"}"         { return RBRACE; }
+";"         { return SEMICOLON; }
+","         { return COMMA; }
+"."         { return DOT; }
+
+{enter}     { yylval.ival = atoi(yytext); return LIT_INT; }
+{real}      { yylval.fval = atof(yytext); return LIT_FLOAT; }
+
+\"[^\"\n]*\" { 
+              setup_id();
+              /* Quitamos comillas si quieres, aquí se copian tal cual */
+              return LIT_STRING; 
+            }
+
+{identif}   { setup_id(); return ID; }
+
+[ \t\r\n]+  { /* ignorar */ }
+
+.           { printf("Lexical Error: %s\n", yytext); }
+
+%%

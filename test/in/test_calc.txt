@@ -1,0 +1,12 @@
+// Debe dar 14 (multiplicacion antes que suma)
+3 + 2 * 5.5; 
+
+// Debe dar 11 (parentesis manda)
+(3 + 2) * 2.2;
+
+// Debe dar 256 (potencia antes que mult: 2 * (2**3) = 16? No, 2*8=16)
+// Espera: 2 * 2 ** 3 -> 2 * 8 = 16.
+2 * 2 ** 3;
+
+// Asignacion dummy
+a := 10 + 5;
