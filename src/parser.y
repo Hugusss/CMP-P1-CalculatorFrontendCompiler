@@ -60,7 +60,7 @@ void install_var(char *name, varType type) {
 %token <fval> LIT_FLOAT
 %token <ident> ID LIT_STRING
 
-%type <val_info> expressio term factor potencia unario
+%type <val_info> expressio term_and term_not relacion arith_exp arith_term potencia unario factor
 %type <ident> variable
 
 %start programa
@@ -88,7 +88,6 @@ declaracion : KW_INT variable { install_var($2.lexema, INTEGER); }
             | KW_STRING variable { install_var($2.lexema, STRING); }
             | KW_BOOL variable { install_var($2.lexema, BOOLEAN); }
             
-            /* Declaración con inicialización */
             | KW_INT variable ASSIGN expressio { 
                 install_var($2.lexema, INTEGER); 
                 value_info *v;
@@ -117,18 +116,25 @@ declaracion : KW_INT variable { install_var($2.lexema, INTEGER); }
                      }
                 }
             }
-            /* ... Añadir bool si quieres ... */
+            | KW_BOOL variable ASSIGN expressio {
+                install_var($2.lexema, BOOLEAN);
+                value_info *v;
+                if (sym_lookup($2.lexema, &v) == SYMTAB_OK) {
+                     if ($4.type == BOOLEAN) {
+                        v->value.bval = $4.value.bval;
+                        printf(">> %s inicializada a %s\n", $2.lexema, v->value.bval ? "true" : "false");
+                     }
+                }
+            }
             ;
 
 variable : ID ;
 
 asignacion : variable ASSIGN expressio {
                 value_info *dest;
-                /* Pasamos &dest porque sym_lookup quiere value_info ** */
                 if (sym_lookup($1.lexema, &dest) != SYMTAB_OK) {
                     fprintf(stderr, "Error semántico (Línea %d): Variable '%s' no declarada.\n", $1.line, $1.lexema);
                 } else {
-                    /* Chequeo de Tipos Básico */
                     if (dest->type == INTEGER) {
                         if ($3.type == INTEGER) dest->value.ival = $3.value.ival;
                         else if ($3.type == FLOAT) dest->value.ival = (int)$3.value.fval; 
@@ -143,8 +149,10 @@ asignacion : variable ASSIGN expressio {
                              dest->value.sval = strdup($3.value.sval);
                          }
                     }
+                    else if (dest->type == BOOLEAN) {
+                        if ($3.type == BOOLEAN) dest->value.bval = $3.value.bval;
+                    }
                     
-                    /* Feedback visual */
                     if (dest->type != ERROR_VAL) {
                         char *valStr = value_to_str(*dest);
                         printf(">> %s := %s\n", $1.lexema, valStr);
@@ -156,25 +164,55 @@ asignacion : variable ASSIGN expressio {
 
 /* --- PRECEDENCIA --- */
 
-expressio : term
-          | expressio PLUS term   { $$ = op_sum($1, $3); }
-          | expressio MINUS term  { $$ = op_sub($1, $3); }
+/* Nivel 1: Lógico OR (Menor precedencia) */
+expressio : term_and
+          | expressio OR term_and { $$ = op_or($1, $3); }
           ;
 
-term : potencia
-     | term MULT potencia { $$ = op_mult($1, $3); }
-     | term DIV potencia  { $$ = op_div($1, $3); }
-     ;
+/* Nivel 2: Lógico AND */
+term_and : term_not
+         | term_and AND term_not { $$ = op_and($1, $3); }
+         ;
 
+/* Nivel 3: Lógico NOT (Unario) */
+term_not : relacion
+         | NOT term_not { $$ = op_not($2); }
+         ;
+
+/* Nivel 4: Relacionales (Comparaciones) */
+relacion : arith_exp
+         | arith_exp EQ arith_exp  { $$ = op_eq($1, $3); }
+         | arith_exp NEQ arith_exp { $$ = op_neq($1, $3); }
+         | arith_exp GT arith_exp  { $$ = op_gt($1, $3); }
+         | arith_exp GE arith_exp  { $$ = op_ge($1, $3); }
+         | arith_exp LT arith_exp  { $$ = op_lt($1, $3); }
+         | arith_exp LE arith_exp  { $$ = op_le($1, $3); }
+         ;
+
+/* Nivel 5: Aritmética Suma/Resta */
+arith_exp : arith_term
+          | arith_exp PLUS arith_term   { $$ = op_sum($1, $3); }
+          | arith_exp MINUS arith_term  { $$ = op_sub($1, $3); }
+          ;
+
+/* Nivel 6: Aritmética Mult/Div */
+arith_term : potencia
+           | arith_term MULT potencia { $$ = op_mult($1, $3); }
+           | arith_term DIV potencia  { $$ = op_div($1, $3); }
+           ;
+
+/* Nivel 7: Potencia */
 potencia : unario
          | unario POW potencia { $$ = op_pow($1, $3); }
          ;
 
+/* Nivel 8: Unarios Aritméticos */
 unario : factor
        | MINUS factor { $$ = op_unary_minus($2); }
        | PLUS factor  { $$ = $2; }
        ;
 
+/* Nivel 9: Átomos */
 factor : LPAREN expressio RPAREN { $$ = $2; }
        | LIT_INT      { $$ = create_int($1); }
        | LIT_FLOAT    { $$ = create_float($1); }
@@ -182,7 +220,6 @@ factor : LPAREN expressio RPAREN { $$ = $2; }
        | LIT_BOOL     { $$ = create_bool($1); }
        | variable     { 
             value_info *val_ptr;
-            /* Pasamos &val_ptr */
             if (sym_lookup($1.lexema, &val_ptr) == SYMTAB_OK) {
                 $$ = *val_ptr; 
                 if (val_ptr->type == STRING && val_ptr->value.sval) {

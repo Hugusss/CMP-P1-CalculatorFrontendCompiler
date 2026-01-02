@@ -98,3 +98,70 @@ value_info op_unary_minus(value_info a) {
     if (a.type == FLOAT)   return create_float(-a.value.fval);
     return create_error();
 }
+
+
+/* --- OPERADORES LÓGICOS --- */
+
+value_info op_and(value_info a, value_info b) {
+    if (a.type == BOOLEAN && b.type == BOOLEAN) 
+        return create_bool(a.value.bval && b.value.bval);
+    printf("Error: AND requiere operandos booleanos.\n");
+    return create_error();
+}
+
+value_info op_or(value_info a, value_info b) {
+    if (a.type == BOOLEAN && b.type == BOOLEAN) 
+        return create_bool(a.value.bval || b.value.bval);
+    printf("Error: OR requiere operandos booleanos.\n");
+    return create_error();
+}
+
+value_info op_not(value_info a) {
+    if (a.type == BOOLEAN) 
+        return create_bool(!a.value.bval);
+    printf("Error: NOT requiere operando booleano.\n");
+    return create_error();
+}
+
+/* --- OPERADORES RELACIONALES --- */
+
+/* Helper para obtener valor numérico float de int/float */
+float get_val(value_info v) {
+    if (v.type == INTEGER) return (float)v.value.ival;
+    if (v.type == FLOAT) return v.value.fval;
+    return 0.0;
+}
+bool is_num(value_info v) { return v.type == INTEGER || v.type == FLOAT; }
+
+value_info op_eq(value_info a, value_info b) {
+    if (is_num(a) && is_num(b)) return create_bool(get_val(a) == get_val(b));
+    if (a.type == BOOLEAN && b.type == BOOLEAN) return create_bool(a.value.bval == b.value.bval);
+    if (a.type == STRING && b.type == STRING) return create_bool(strcmp(a.value.sval, b.value.sval) == 0);
+    return create_bool(false); /* Tipos distintos no son iguales */
+}
+
+value_info op_neq(value_info a, value_info b) {
+    value_info res = op_eq(a, b);
+    if (res.type == BOOLEAN) res.value.bval = !res.value.bval;
+    return res;
+}
+
+value_info op_gt(value_info a, value_info b) {
+    if (is_num(a) && is_num(b)) return create_bool(get_val(a) > get_val(b));
+    return create_error();
+}
+
+value_info op_lt(value_info a, value_info b) {
+    if (is_num(a) && is_num(b)) return create_bool(get_val(a) < get_val(b));
+    return create_error();
+}
+
+value_info op_ge(value_info a, value_info b) {
+    if (is_num(a) && is_num(b)) return create_bool(get_val(a) >= get_val(b));
+    return create_error();
+}
+
+value_info op_le(value_info a, value_info b) {
+    if (is_num(a) && is_num(b)) return create_bool(get_val(a) <= get_val(b));
+    return create_error();
+}

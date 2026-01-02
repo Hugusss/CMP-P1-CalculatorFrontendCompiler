@@ -10,7 +10,7 @@ typedef enum {
     FLOAT,
     STRING,
     BOOLEAN,
-    ERROR_VAL /* Para controlar errores semánticos */
+    ERROR_VAL
 } varType;
 
 /* Estructura para almacenar el valor y su tipo */
@@ -24,23 +24,34 @@ typedef struct {
     } value;
 } value_info;
 
-/* Prototipos de funciones */
+/* Prototipos */
 char *type_to_str(varType type);
 char *value_to_str(value_info v);
 
-/* Constructores rápidos */
 value_info create_int(int v);
 value_info create_float(float v);
 value_info create_string(char *v);
 value_info create_bool(bool v);
 value_info create_error(void);
 
-/* Operaciones */
+/* Aritmética */
 value_info op_sum(value_info a, value_info b);
 value_info op_sub(value_info a, value_info b);
 value_info op_mult(value_info a, value_info b);
 value_info op_div(value_info a, value_info b);
 value_info op_pow(value_info a, value_info b);
 value_info op_unary_minus(value_info a);
+
+/* Lógica y Relacional */
+value_info op_and(value_info a, value_info b);
+value_info op_or(value_info a, value_info b);
+value_info op_not(value_info a);
+
+value_info op_eq(value_info a, value_info b);  /* = */
+value_info op_neq(value_info a, value_info b); /* <> */
+value_info op_gt(value_info a, value_info b);  /* > */
+value_info op_lt(value_info a, value_info b);  /* < */
+value_info op_ge(value_info a, value_info b);  /* >= */
+value_info op_le(value_info a, value_info b);  /* <= */
 
 #endif

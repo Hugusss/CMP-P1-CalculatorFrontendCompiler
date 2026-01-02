@@ -46,6 +46,12 @@ identif     [a-zA-Z]([a-zA-Z0-9_])*
 "and"       { return AND; }
 "or"        { return OR; }
 "not"       { return NOT; }
+">="        { return GE; }
+"<="        { return LE; }
+"<>"        { return NEQ; }
+">"         { return GT; }
+"<"         { return LT; }
+"="         { return EQ; }
 
 "("         { return LPAREN; }
 ")"         { return RPAREN; }
@@ -60,7 +66,6 @@ identif     [a-zA-Z]([a-zA-Z0-9_])*
 
 \"[^\"\n]*\" { 
               setup_id();
-              /* Quitamos comillas si quieres, aquí se copian tal cual */
               return LIT_STRING; 
             }
 

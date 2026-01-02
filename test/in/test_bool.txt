@@ -1,0 +1,9 @@
+bool b := 5 > 3; 
+// Esperado: true
+
+bool c := (10 < 20) and not (5 = 5); 
+// 10<20 (true) AND not (true) -> true AND false -> Esperado: false
+
+int x := 10;
+bool d := x >= 10 or x < 0; 
+// true OR false -> Esperado: true
