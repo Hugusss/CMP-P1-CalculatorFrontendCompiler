@@ -16,8 +16,8 @@ all: $(TARGET)
 
 # Compilación del Ejecutable
 # Depende de los archivos generados por Flex/Bison y tu código C
-$(TARGET): parser.tab.c scanner.c values.c main.c
-	$(CC) $(CFLAGS) -o $(TARGET) main.c values.c parser.tab.c scanner.c $(LIBS)
+$(TARGET): parser.tab.c scanner.c values.c symtab.c main.c
+	$(CC) $(CFLAGS) -o $(TARGET) main.c values.c symtab.c parser.tab.c scanner.c $(LIBS)
 
 # Generación del Analizador Sintáctico (Bison)
 # Genera parser.tab.c y parser.tab.h

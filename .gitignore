@@ -53,3 +53,11 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+
+# testing files
+*.output
+*.tab.c
+*.tab.h
+src/calculadora
+src/scanner.c
