@@ -54,4 +54,11 @@ value_info op_lt(value_info a, value_info b);  /* < */
 value_info op_ge(value_info a, value_info b);  /* >= */
 value_info op_le(value_info a, value_info b);  /* <= */
 
+/* --- FUNCIONES PREDEFINIDAS --- */
+value_info fn_sin(value_info a);
+value_info fn_cos(value_info a);
+value_info fn_tan(value_info a);
+value_info fn_len(value_info a); /* Longitud string */
+value_info fn_substr(value_info s, value_info idx, value_info len);
+
 #endif

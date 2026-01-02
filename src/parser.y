@@ -60,6 +60,8 @@ void install_var(char *name, varType type) {
 %token <fval> LIT_FLOAT
 %token <ident> ID LIT_STRING
 
+%token KW_SIN KW_COS KW_TAN KW_LEN KW_SUBSTR
+
 %type <val_info> expressio term_and term_not relacion arith_exp arith_term potencia unario factor
 %type <ident> variable
 
@@ -218,6 +220,13 @@ factor : LPAREN expressio RPAREN { $$ = $2; }
        | LIT_FLOAT    { $$ = create_float($1); }
        | LIT_STRING   { $$ = create_string($1.lexema); }
        | LIT_BOOL     { $$ = create_bool($1); }
+       | KW_SIN LPAREN expressio RPAREN { $$ = fn_sin($3); }
+       | KW_COS LPAREN expressio RPAREN { $$ = fn_cos($3); }
+       | KW_TAN LPAREN expressio RPAREN { $$ = fn_tan($3); }
+       | KW_LEN LPAREN expressio RPAREN { $$ = fn_len($3); }
+       | KW_SUBSTR LPAREN expressio COMMA expressio COMMA expressio RPAREN { 
+            $$ = fn_substr($3, $5, $7); 
+       }
        | variable     { 
             value_info *val_ptr;
             if (sym_lookup($1.lexema, &val_ptr) == SYMTAB_OK) {

@@ -61,11 +61,26 @@ identif     [a-zA-Z]([a-zA-Z0-9_])*
 ","         { return COMMA; }
 "."         { return DOT; }
 
+"sin"       { return KW_SIN; }
+"cos"       { return KW_COS; }
+"tan"       { return KW_TAN; }
+"LEN"       { return KW_LEN; }
+"len"       { return KW_LEN; }
+"SUBSTR"    { return KW_SUBSTR; }
+"substr"    { return KW_SUBSTR; }
+
 {enter}     { yylval.ival = atoi(yytext); return LIT_INT; }
 {real}      { yylval.fval = atof(yytext); return LIT_FLOAT; }
 
 \"[^\"\n]*\" { 
-              setup_id();
+              /* saltar la primera comilla con yytext+1 */
+              yylval.ident.lexema = strdup(yytext + 1);
+              
+              /* eliminar la ultima comilla poniendo un \0 al final */
+              yylval.ident.lexema[yyleng - 2] = '\0';
+              
+              yylval.ident.line = yylineno;
+
               return LIT_STRING; 
             }
 

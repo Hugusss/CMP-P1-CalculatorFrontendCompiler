@@ -165,3 +165,63 @@ value_info op_le(value_info a, value_info b) {
     if (is_num(a) && is_num(b)) return create_bool(get_val(a) <= get_val(b));
     return create_error();
 }
+
+/* --- FUNCIONES PREDEFINIDAS --- */
+
+/* Helper para obtener float */
+float to_float_val(value_info v) {
+    if (v.type == INTEGER) return (float)v.value.ival;
+    if (v.type == FLOAT) return v.value.fval;
+    return 0.0;
+}
+
+value_info fn_sin(value_info a) {
+    if (!is_num(a)) return create_error();
+    return create_float(sinf(to_float_val(a)));
+}
+
+value_info fn_cos(value_info a) {
+    if (!is_num(a)) return create_error();
+    return create_float(cosf(to_float_val(a)));
+}
+
+value_info fn_tan(value_info a) {
+    if (!is_num(a)) return create_error();
+    return create_float(tanf(to_float_val(a)));
+}
+
+value_info fn_len(value_info a) {
+    if (a.type == STRING && a.value.sval) {
+        return create_int(strlen(a.value.sval));
+    }
+    printf("Error: LEN espera un string.\n");
+    return create_error();
+}
+
+value_info fn_substr(value_info s, value_info idx, value_info len) {
+    if (s.type != STRING || idx.type != INTEGER || len.type != INTEGER) {
+        printf("Error: Uso SUBSTR(string, int, int)\n");
+        return create_error();
+    }
+    
+    char *origen = s.value.sval;
+    int inicio = idx.value.ival;
+    int longitud = len.value.ival;
+    int max_len = strlen(origen);
+
+    if (inicio < 0 || inicio >= max_len) return create_string(""); /* Fuera de rango */
+    
+    /* Ajustar longitud si se pasa */
+    if (inicio + longitud > max_len) longitud = max_len - inicio;
+    if (longitud <= 0) return create_string("");
+
+    char *res = (char*)malloc(longitud + 1);
+    strncpy(res, origen + inicio, longitud);
+    res[longitud] = '\0';
+    
+    /* Creamos el value_info manualmente para no hacer doble strdup con create_string */
+    value_info v; 
+    v.type = STRING; 
+    v.value.sval = res;
+    return v;
+}
