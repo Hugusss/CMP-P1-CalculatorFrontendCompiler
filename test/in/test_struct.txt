@@ -1,0 +1,13 @@
+// Definir struct y variables p1, p2
+struct Punto {
+    int x;
+    int y;
+} p1, p2;
+
+// Asignamos campos
+p1.x := 10;
+p1.y := 20;
+
+//usar campos
+int suma := p1.x + p1.y;
+// Debe dar 30

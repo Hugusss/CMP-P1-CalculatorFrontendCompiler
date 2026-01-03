@@ -38,6 +38,36 @@ void install_var(char *name, varType type) {
         fprintf(stderr, "Error interno: Fallo al insertar '%s' en tabla.\n", name);
     }
 }
+
+/* Estructura auxiliar para guardar campos temporalmente */
+typedef struct {
+    char *name;
+    varType type;
+} FieldInfo;
+
+FieldInfo struct_fields[50]; /* Máximo 50 campos por struct */
+int field_count = 0;
+
+/* Helper para registrar un campo temporal */
+void add_field(char *name, varType type) {
+    if (field_count < 50) {
+        struct_fields[field_count].name = strdup(name);
+        struct_fields[field_count].type = type;
+        field_count++;
+    }
+}
+
+/* Helper para instanciar la estructura (crear p1.x, p1.y...) */
+void install_struct_instance(char *instance_name) {
+    char buffer[256];
+    for (int i = 0; i < field_count; i++) {
+        /* crear el nombre compuesto "p1.x" */
+        sprintf(buffer, "%s.%s", instance_name, struct_fields[i].name);
+        install_var(strdup(buffer), struct_fields[i].type);
+        
+        // printf(">> Campo creado: %s\n", buffer);
+    }
+}
 %}
 
 %union {
@@ -128,9 +158,37 @@ declaracion : KW_INT variable { install_var($2.lexema, INTEGER); }
                      }
                 }
             }
+
+            /* DEFINICIÓN DE ESTRUCTURA */
+            | STRUCT ID LBRACE { field_count = 0; } lista_campos RBRACE lista_instancias
             ;
 
-variable : ID ;
+lista_campos : campo SEMICOLON lista_campos
+             | campo SEMICOLON
+             ;
+
+campo : KW_INT ID    { add_field($2.lexema, INTEGER); }
+      | KW_FLOAT ID  { add_field($2.lexema, FLOAT); }
+      | KW_STRING ID { add_field($2.lexema, STRING); }
+      | KW_BOOL ID   { add_field($2.lexema, BOOLEAN); }
+      ;
+
+lista_instancias : ID { install_struct_instance($1.lexema); }
+                 | ID COMMA lista_instancias { install_struct_instance($1.lexema); }
+                 ;
+
+variable : ID 
+         | ID DOT ID { 
+             /* construir el nombre compuesto para buscarlo en la tabla */
+             char buffer[256];
+             sprintf(buffer, "%s.%s", $1.lexema, $3.lexema);
+             
+             /* guardar el nombre compuesto en $$.lexema para que 
+                'factor' o 'asignacion' lo usen en sym_lookup */
+             $$.lexema = strdup(buffer);
+             $$.line = yylineno;
+         }
+         ;
 
 asignacion : variable ASSIGN expressio {
                 value_info *dest;
