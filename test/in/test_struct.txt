@@ -1,13 +1,19 @@
-// Definir struct y variables p1, p2
-struct Punto {
+// Definir struct y variables
+struct Punto3D {
     int x;
     int y;
-} p1, p2;
+    int z;
+} p1, p2
 
-// Asignamos campos
-p1.x := 10;
-p1.y := 20;
+//Asignamos campos
+p1.x := 10
+p1.y := 20
+
+p2.z := 5
 
 //usar campos
-int suma := p1.x + p1.y;
+int suma := p1.x + p1.y
 // Debe dar 30
+
+int suma2 := suma + p2.z
+#Debe dar 35

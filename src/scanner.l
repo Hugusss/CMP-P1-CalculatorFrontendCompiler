@@ -23,10 +23,19 @@ identif     [a-zA-Z]([a-zA-Z0-9_])*
 
 %%
 
-"//".* { /* comentario linea */ }
-"#".* { /* comentario linea */ }
-"/*"([^*]|(\*+[^*/]))*\*+\/ { /* comentario bloque */ }
+    /* --- COMENTARIOS --- */
+"//"[^\n]* { /* Ignorar texto comentario, pero NO el \n */ }
+"#"[^\n]* { /* Ignorar texto comentario, pero NO el \n */ }
+"/*"([^*]|(\*+[^*/]))*\*+\/ { /* Comentario bloque normal */ }
 
+    /* --- DELIMITADORES --- */
+\n          { return EOL; }
+[ \t\r]+    { /* Ignorar espacios y tabs */ }
+";"         { return SEMICOLON; } /* solo para dentro de structs */
+","         { return COMMA; }
+"."         { return DOT; }
+
+    /* --- PALABRAS RESERVADAS --- */
 "int"       { return KW_INT; }
 "float"     { return KW_FLOAT; }
 "string"    { return KW_STRING; }
@@ -35,6 +44,7 @@ identif     [a-zA-Z]([a-zA-Z0-9_])*
 "true"      { yylval.ival = 1; return LIT_BOOL; }
 "false"     { yylval.ival = 0; return LIT_BOOL; }
 
+    /* --- OPERADORES --- */
 ":="        { return ASSIGN; }
 "+"         { return PLUS; }
 "-"         { return MINUS; }
@@ -57,10 +67,8 @@ identif     [a-zA-Z]([a-zA-Z0-9_])*
 ")"         { return RPAREN; }
 "{"         { return LBRACE; }
 "}"         { return RBRACE; }
-";"         { return SEMICOLON; }
-","         { return COMMA; }
-"."         { return DOT; }
 
+    /* --- FUNCIONES --- */
 "sin"       { return KW_SIN; }
 "cos"       { return KW_COS; }
 "tan"       { return KW_TAN; }
@@ -69,24 +77,18 @@ identif     [a-zA-Z]([a-zA-Z0-9_])*
 "SUBSTR"    { return KW_SUBSTR; }
 "substr"    { return KW_SUBSTR; }
 
+    /* --- LITERALES --- */
 {enter}     { yylval.ival = atoi(yytext); return LIT_INT; }
 {real}      { yylval.fval = atof(yytext); return LIT_FLOAT; }
 
 \"[^\"\n]*\" { 
-              /* saltar la primera comilla con yytext+1 */
               yylval.ident.lexema = strdup(yytext + 1);
-              
-              /* eliminar la ultima comilla poniendo un \0 al final */
               yylval.ident.lexema[yyleng - 2] = '\0';
-              
-              yylval.ident.line = yylineno;
-
+              yylval.ident.line = yylineno; 
               return LIT_STRING; 
             }
 
 {identif}   { setup_id(); return ID; }
-
-[ \t\r\n]+  { /* ignorar */ }
 
 .           { printf("Lexical Error: %s\n", yytext); }
 

@@ -10,6 +10,34 @@ extern int yylineno;
 extern char *yytext;
 void yyerror(const char *s);
 
+void install_var(char *name, varType type);
+
+/* --- BLOQUE DE STRUCTS --- */
+typedef struct {
+    char *name;
+    varType type;
+} FieldInfo;
+
+FieldInfo struct_fields[50];
+int field_count = 0;
+
+void add_field(char *name, varType type) {
+    if (field_count < 50) {
+        struct_fields[field_count].name = strdup(name);
+        struct_fields[field_count].type = type;
+        field_count++;
+    }
+}
+
+void install_struct_instance(char *instance_name) {
+    char buffer[256];
+    for (int i = 0; i < field_count; i++) {
+        sprintf(buffer, "%s.%s", instance_name, struct_fields[i].name);
+        /* guardar copia persistente del nombre */
+        install_var(strdup(buffer), struct_fields[i].type);
+    }
+}
+
 /* Helper para guardar valores en la tabla */
 void install_var(char *name, varType type) {
     value_info *v;
@@ -38,36 +66,6 @@ void install_var(char *name, varType type) {
         fprintf(stderr, "Error interno: Fallo al insertar '%s' en tabla.\n", name);
     }
 }
-
-/* Estructura auxiliar para guardar campos temporalmente */
-typedef struct {
-    char *name;
-    varType type;
-} FieldInfo;
-
-FieldInfo struct_fields[50]; /* Máximo 50 campos por struct */
-int field_count = 0;
-
-/* Helper para registrar un campo temporal */
-void add_field(char *name, varType type) {
-    if (field_count < 50) {
-        struct_fields[field_count].name = strdup(name);
-        struct_fields[field_count].type = type;
-        field_count++;
-    }
-}
-
-/* Helper para instanciar la estructura (crear p1.x, p1.y...) */
-void install_struct_instance(char *instance_name) {
-    char buffer[256];
-    for (int i = 0; i < field_count; i++) {
-        /* crear el nombre compuesto "p1.x" */
-        sprintf(buffer, "%s.%s", instance_name, struct_fields[i].name);
-        install_var(strdup(buffer), struct_fields[i].type);
-        
-        // printf(">> Campo creado: %s\n", buffer);
-    }
-}
 %}
 
 %union {
@@ -83,14 +81,13 @@ void install_struct_instance(char *instance_name) {
 
 %token ASSIGN PLUS MINUS MULT DIV MOD POW
 %token AND OR NOT EQ NEQ GT GE LT LE
-%token LPAREN RPAREN LBRACE RBRACE SEMICOLON COMMA DOT
+%token LPAREN RPAREN LBRACE RBRACE SEMICOLON COMMA DOT EOL
 %token KW_INT KW_FLOAT KW_STRING KW_BOOL STRUCT
+%token KW_SIN KW_COS KW_TAN KW_LEN KW_SUBSTR
 
 %token <ival> LIT_INT LIT_BOOL
 %token <fval> LIT_FLOAT
 %token <ident> ID LIT_STRING
-
-%token KW_SIN KW_COS KW_TAN KW_LEN KW_SUBSTR
 
 %type <val_info> expressio term_and term_not relacion arith_exp arith_term potencia unario factor
 %type <ident> variable
@@ -103,17 +100,24 @@ programa : lista_sentencias ;
 
 lista_sentencias : /* vacio */
                  | lista_sentencias sentencia
+                 | lista_sentencias EOL 
                  ;
 
-sentencia : declaracion SEMICOLON
-          | asignacion SEMICOLON
-          | expressio SEMICOLON { 
+/* para terminar con EOL (\n) */
+sentencia : declaracion EOL
+          | asignacion EOL
+          | expressio EOL { 
                 char *s = value_to_str($1);
                 printf(">> Val: %s\n", s);
                 free(s);
             }
-          | error SEMICOLON { yyerrok; }
+          | error EOL { yyerrok; }
           ;
+
+/* Helper para aceptar saltos de linea dentro de structs */
+opt_eol : /* vacio */
+        | opt_eol EOL
+        ;
 
 declaracion : KW_INT variable { install_var($2.lexema, INTEGER); }
             | KW_FLOAT variable { install_var($2.lexema, FLOAT); }
@@ -126,7 +130,6 @@ declaracion : KW_INT variable { install_var($2.lexema, INTEGER); }
                 if (sym_lookup($2.lexema, &v) == SYMTAB_OK) {
                      if ($4.type == INTEGER) v->value.ival = $4.value.ival;
                      else if ($4.type == FLOAT) v->value.ival = (int)$4.value.fval;
-                     printf(">> %s inicializada a %d\n", $2.lexema, v->value.ival);
                 }
             }
             | KW_FLOAT variable ASSIGN expressio {
@@ -135,7 +138,6 @@ declaracion : KW_INT variable { install_var($2.lexema, INTEGER); }
                 if (sym_lookup($2.lexema, &v) == SYMTAB_OK) {
                      if ($4.type == FLOAT) v->value.fval = $4.value.fval;
                      else if ($4.type == INTEGER) v->value.fval = (float)$4.value.ival;
-                     printf(">> %s inicializada a %.5f\n", $2.lexema, v->value.fval);
                 }
             }
             | KW_STRING variable ASSIGN expressio {
@@ -144,7 +146,6 @@ declaracion : KW_INT variable { install_var($2.lexema, INTEGER); }
                 if (sym_lookup($2.lexema, &v) == SYMTAB_OK) {
                      if ($4.type == STRING && $4.value.sval) {
                         v->value.sval = strdup($4.value.sval);
-                        printf(">> %s inicializada a \"%s\"\n", $2.lexema, v->value.sval);
                      }
                 }
             }
@@ -154,17 +155,20 @@ declaracion : KW_INT variable { install_var($2.lexema, INTEGER); }
                 if (sym_lookup($2.lexema, &v) == SYMTAB_OK) {
                      if ($4.type == BOOLEAN) {
                         v->value.bval = $4.value.bval;
-                        printf(">> %s inicializada a %s\n", $2.lexema, v->value.bval ? "true" : "false");
                      }
                 }
             }
-
-            /* DEFINICIÓN DE ESTRUCTURA */
-            | STRUCT ID LBRACE { field_count = 0; } lista_campos RBRACE lista_instancias
+            | KW_INT variable COMMA variable {
+                install_var($2.lexema, INTEGER);
+                install_var($4.lexema, INTEGER);
+            }
+            
+            /* STRUCT: usa opt_eol para permitir formato libre */
+            | STRUCT ID LBRACE opt_eol { field_count = 0; } lista_campos RBRACE lista_instancias
             ;
 
-lista_campos : campo SEMICOLON lista_campos
-             | campo SEMICOLON
+lista_campos : campo SEMICOLON opt_eol lista_campos
+             | campo SEMICOLON opt_eol
              ;
 
 campo : KW_INT ID    { add_field($2.lexema, INTEGER); }
@@ -182,9 +186,6 @@ variable : ID
              /* construir el nombre compuesto para buscarlo en la tabla */
              char buffer[256];
              sprintf(buffer, "%s.%s", $1.lexema, $3.lexema);
-             
-             /* guardar el nombre compuesto en $$.lexema para que 
-                'factor' o 'asignacion' lo usen en sym_lookup */
              $$.lexema = strdup(buffer);
              $$.line = yylineno;
          }
@@ -284,7 +285,7 @@ factor : LPAREN expressio RPAREN { $$ = $2; }
        | KW_LEN LPAREN expressio RPAREN { $$ = fn_len($3); }
        | KW_SUBSTR LPAREN expressio COMMA expressio COMMA expressio RPAREN { 
             $$ = fn_substr($3, $5, $7); 
-       }
+         }
        | variable     { 
             value_info *val_ptr;
             if (sym_lookup($1.lexema, &val_ptr) == SYMTAB_OK) {

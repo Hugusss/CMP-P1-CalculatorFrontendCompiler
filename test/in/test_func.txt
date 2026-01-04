@@ -1,9 +1,9 @@
-float s := sin(PI / 2);
+float s := sin(PI / 2)
 // Debe dar 1.0 (aprox)
 
-string t := "Hola Mundo";
-int l := LEN(t); 
+string t := "Hola Mundo"
+int l := LEN(t)
 // Debe dar 10
 
-string sub := SUBSTR(t, 0, 4);
+string sub := SUBSTR(t, 0, 4)
 // Debe dar "Hola"

@@ -1,0 +1,31 @@
+//Declaracions
+float x
+float z
+int i,j
+string s
+bool b
+struct Punt {
+    int x;
+    int y;
+} p1
+// assignacions
+x := 1.5
+i := 5
+z := i * (x + i) - i / 4.0
+s := "Hola"
+b := z > 3 or not (i > 0 and i <= 10) or false
+p1.x = 10
+p1.y = p1.x + i
+// expressions bàsiques
+x
+i
+z
+s
+b
+/*
+* expressions
+*/
+i + i * 2
+-i + x
+s + (s + i) + "--" + x + b
+b or not b

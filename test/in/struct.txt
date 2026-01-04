@@ -1,0 +1,31 @@
+struct Coordenada {
+    string name;
+    bool seen;
+    int x;
+    int y;
+    float extra;
+} coor1, coor2
+
+//assignaciones
+coor1.name := "Origen"
+coor1.seen := true
+coor1.x := 0
+coor1.y := 1
+coor1.extra := 3.5
+
+coor2.name := "Destino"
+coor2.seen := false
+coor2.x := 5
+coor2.y := 8
+coor2.extra := 10.2
+
+//operamos
+int disX := coor2.x - coor1.x
+//debe dar 5
+int disY := coor2.y - coor1.y
+/* Debe dar 7 */
+
+float diff := disY - disX
+//debe dar 2
+coor2.extra := coor1.extra + diff
+# debe dar 5.5
