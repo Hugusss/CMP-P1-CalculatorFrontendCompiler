@@ -30,7 +30,7 @@ El proyecto incluye un Makefile automatizado. ¡Cualquier archivo que se quiera 
     ```bash
     make test
     ```
-    Esto procesará todos los archivos de pruebas ubicados dentro de `test/in` y generará los resultados en `test/out`.
+    Esto procesará todos los archivos de pruebas ubicados dentro de `test/in` y generará los resultados en `test/out`. Ya se incluyen gran variedad de archivos que prueban distintas funcionalidades.
 
 3. **Ejecución manual:**
     ```bash
