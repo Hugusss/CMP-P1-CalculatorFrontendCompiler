@@ -109,8 +109,10 @@ sentencia : declaracion EOL
           | asignacion EOL
           | expressio EOL { 
                 char *s = value_to_str($1);
-                printf(">> Val: %s\n", s);
+                char *t = type_to_str($1.type);
+                printf(">> (%s) %s\n", t, s);
                 free(s);
+                free(t);
             }
           | error EOL { yyerrok; }
           ;
@@ -131,7 +133,11 @@ declaracion : KW_INT variable { install_var($2.lexema, INTEGER); }
                 if (sym_lookup($2.lexema, &v) == SYMTAB_OK) {
                      if ($4.type == INTEGER) v->value.ival = $4.value.ival;
                      else if ($4.type == FLOAT) v->value.ival = (int)$4.value.fval;
-                     printf(">> %s inicializada a %d\n", $2.lexema, v->value.ival);
+
+                     char *valStr = value_to_str(*v);
+                     char *typStr = type_to_str(v->type);
+                     printf(">> %s (%s) := %s\n", $2.lexema, typStr, valStr);
+                     free(valStr); free(typStr);
                 }
             }
             | KW_FLOAT variable ASSIGN expressio {
@@ -140,7 +146,11 @@ declaracion : KW_INT variable { install_var($2.lexema, INTEGER); }
                 if (sym_lookup($2.lexema, &v) == SYMTAB_OK) {
                      if ($4.type == FLOAT) v->value.fval = $4.value.fval;
                      else if ($4.type == INTEGER) v->value.fval = (float)$4.value.ival;
-                     printf(">> %s inicializada a %.5f\n", $2.lexema, v->value.fval);
+                     
+                     char *valStr = value_to_str(*v);
+                     char *typStr = type_to_str(v->type);
+                     printf(">> %s (%s) := %s\n", $2.lexema, typStr, valStr);
+                     free(valStr); free(typStr);
                 }
             }
             | KW_STRING variable ASSIGN expressio {
@@ -149,7 +159,11 @@ declaracion : KW_INT variable { install_var($2.lexema, INTEGER); }
                 if (sym_lookup($2.lexema, &v) == SYMTAB_OK) {
                      if ($4.type == STRING && $4.value.sval) {
                         v->value.sval = strdup($4.value.sval);
-                        printf(">> %s inicializada a \"%s\"\n", $2.lexema, v->value.sval);
+
+                        char *valStr = value_to_str(*v);
+                        char *typStr = type_to_str(v->type);
+                        printf(">> %s (%s) := %s\n", $2.lexema, typStr, valStr);
+                        free(valStr); free(typStr);
                      }
                 }
             }
@@ -159,7 +173,11 @@ declaracion : KW_INT variable { install_var($2.lexema, INTEGER); }
                 if (sym_lookup($2.lexema, &v) == SYMTAB_OK) {
                      if ($4.type == BOOLEAN) {
                         v->value.bval = $4.value.bval;
-                        printf(">> %s inicializada a %s\n", $2.lexema, v->value.bval ? "true" : "false");
+                        
+                        char *valStr = value_to_str(*v);
+                        char *typStr = type_to_str(v->type);
+                        printf(">> %s (%s) := %s\n", $2.lexema, typStr, valStr);
+                        free(valStr); free(typStr);
                      }
                 }
             }
@@ -221,8 +239,11 @@ asignacion : variable ASSIGN expressio {
                     
                     if (dest->type != ERROR_VAL) {
                         char *valStr = value_to_str(*dest);
-                        printf(">> %s := %s\n", $1.lexema, valStr);
+                        char *typStr = type_to_str(dest->type);
+                        
+                        printf(">> %s (%s) := %s\n", $1.lexema, typStr, valStr);
                         free(valStr);
+                        free(typStr);
                     }
                 }
              }

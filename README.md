@@ -37,6 +37,40 @@ El proyecto incluye un Makefile automatizado. ¡Cualquier archivo que se quiera 
     ./calculadora ../test/in/{archivo_a_testear}.txt
     ```
 
-## Comentarios
-Esta propuesta trabaja según limitaciones obvias como no poder usar el mismo nombre para dos variables en el mismo input; también añadir que en la concatenación de strings, si se hace una suma númerica antes que la suma de concatenación, esta se hará como suma númerica y luego el resultado será concatenado con el string... Por otro lado, una funcionalidad conseguidad a destacar que no se especificaba en el enunciado es la capacidad de poder declarar una variable y hacerle una asignación en la misma línea
+
+## Notas de Diseño y Limitaciones
+
+### 1. Gestión de Memoria y Ámbito (Scope)
+
+El compilador utiliza una **tabla de símbolos global única**. Esto implica una limitación de diseño consciente:
+
+* **No se permite la redeclaración:** No es posible declarar dos variables con el mismo nombre en el mismo fichero, incluso si son de tipos distintos.
+* **Persistencia:** Una vez declarada una variable, su nombre queda reservado en memoria durante toda la ejecución del programa.
+
+### 2. Polimorfismo del Operador `+` (Concatenación)
+
+El operador `+` ha sido sobrecargado para soportar tanto suma aritmética como concatenación de cadenas. El comportamiento depende de la **asociatividad por la izquierda** del análisis sintáctico:
+
+* El compilador evalúa las expresiones de izquierda a derecha.
+* **Comportamiento Mixto:**
+    * `10 + 10 + " euros"`  Primero suma (`20`), luego concatena  Resultado: `"20 euros"`.
+    * `"euros " + 10 + 10`  Primero concatena (`"euros 10"`), luego concatena de nuevo  Resultado: `"euros 1010"`.
+
+* Esta decisión permite realizar cálculos matemáticos dentro de una línea de impresión sin necesidad de paréntesis explícitos al inicio.
+
+### 3. Inicialización en Línea
+
+Aunque el enunciado sugería separar la declaración (`int a`) de la asignación (`a := 10`), este compilador implementa **inicialización en declaración**.
+
+* Permite construcciones como `int a := 10` o `string s := "Hola"`.
+* Esto optimiza la escritura de código y reduce el número de accesos a la tabla de símbolos (se realiza la inserción y la asignación de valor en una sola regla gramatical).
+
+### 4. Estructuras mediante "Aplanamiento de Nombres"
+
+La gestión de `struct` se realiza mediante una técnica de *name flattening* en la tabla de símbolos.
+
+* Al declarar `struct P { int x; } p1`, el compilador genera internamente la variable `"p1.x"`.
+* Esto permite simular el acceso a campos complejos sin necesidad de implementar tablas de símbolos jerárquicas o anidadas.
+
+---
 #### Autor: HUGO MIRANDA SERRANO
