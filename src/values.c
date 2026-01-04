@@ -46,12 +46,59 @@ value_info create_error() {
 
 /* --- OPERACIONES --- */
 
+/* Helper interno: Convierte cualquier valor a un string nuevo (malloc) */
+char* val_to_str_alloc(value_info v) {
+    char buffer[256]; /* buffer temporal */
+    
+    switch(v.type) {
+        case INTEGER: 
+            sprintf(buffer, "%d", v.value.ival); 
+            break;
+        case FLOAT:   
+            sprintf(buffer, "%.5f", v.value.fval);
+            break;
+        case STRING:  
+            // si ya es string, hacer copia para poder liberarla igual que los otros
+            return v.value.sval ? strdup(v.value.sval) : strdup("");
+        case BOOLEAN: 
+            sprintf(buffer, "%s", v.value.bval ? "true" : "false"); 
+            break;
+        default:      
+            sprintf(buffer, "undef"); 
+            break;
+    }
+    return strdup(buffer);
+}
+
 value_info op_sum(value_info a, value_info b) {
+    /* CASO 1: Ambos son números -> Suma Aritmética */
     if (a.type == INTEGER && b.type == INTEGER) return create_int(a.value.ival + b.value.ival);
     if (a.type == INTEGER && b.type == FLOAT)   return create_float(a.value.ival + b.value.fval);
     if (a.type == FLOAT   && b.type == INTEGER) return create_float(a.value.fval + b.value.ival);
     if (a.type == FLOAT   && b.type == FLOAT)   return create_float(a.value.fval + b.value.fval);
     
+    /* CASO 2: Concatenación (Si al menos uno es STRING) */
+    if (a.type == STRING || b.type == STRING) {
+        char *s1 = val_to_str_alloc(a);
+        char *s2 = val_to_str_alloc(b);
+        
+        /* Reservar memoria para la unión + null terminator */
+        char *res = (char*)malloc(strlen(s1) + strlen(s2) + 1);
+        
+        strcpy(res, s1);
+        strcat(res, s2);
+        
+        /* vaciar strings temporales */
+        free(s1);
+        free(s2);
+           
+        value_info v;
+        v.type = STRING;
+        v.value.sval = res; // asignar directo el puntero
+        return v;
+    }
+
+    printf("Error: Tipos incompatibles en suma (y no son strings).\n");
     return create_error();
 }
 
@@ -219,7 +266,7 @@ value_info fn_substr(value_info s, value_info idx, value_info len) {
     strncpy(res, origen + inicio, longitud);
     res[longitud] = '\0';
     
-    /* Creamos el value_info manualmente para no hacer doble strdup con create_string */
+    /* crear el value_info manualmente para no hacer doble strdup con create_string */
     value_info v; 
     v.type = STRING; 
     v.value.sval = res;

@@ -1,0 +1,22 @@
+string s := "Hola"
+int i := 10
+float f := 3.5
+
+// String + String
+string r1 := s + " Mundo"
+
+// String + Int
+string r2 := "Numero: " + i
+
+// Int + String
+string r3 := i + " es diez"
+
+// Float + String
+string r4 := f + " es float"
+
+// Caso complejo de precedencia (Izquierda a Derecha)
+// 10 + 10 es 20 (int), luego + " start" -> "20 start"
+string r5 := 10 + 10 + " start"
+
+// "start " + 10 -> "start 10", luego + 10 -> "start 1010"
+string r6 := "start " + 10 + 10
